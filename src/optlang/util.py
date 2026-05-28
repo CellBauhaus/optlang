@@ -222,6 +222,24 @@ def is_numeric(obj):
         else:
             return True
 
+def is_zero(expr):
+    if isinstance(expr, symbolics.Mul):
+        return any(map(is_zero, expr.args))
+    elif isinstance(expr, symbolics.Add):
+        return all(map(is_zero, expr.args))
+    elif isinstance(expr, symbolics.Symbol):
+        return False
+    elif isinstance(expr, symbolics.Pow):
+        return False
+    elif isinstance(expr, (float, int)):
+        return expr == 0
+    elif isinstance(expr, symbolics.Real):
+        return float(expr) == 0.0
+    elif isinstance(expr, symbolics.Integer):
+        return int(expr) == 0
+    else:
+        raise NotImplementedError("Type not implemented: " + str(type(expr)))
+
 
 def expr_to_json(expr):
     """
@@ -230,7 +248,7 @@ def expr_to_json(expr):
     if isinstance(expr, symbolics.Mul):
         return {"type": "Mul", "args": [expr_to_json(arg) for arg in expr.args]}
     elif isinstance(expr, symbolics.Add):
-        return {"type": "Add", "args": [expr_to_json(arg) for arg in expr.args]}
+        return {"type": "Add", "args": [expr_to_json(arg) for arg in expr.args if not is_zero(arg)]}
     elif isinstance(expr, symbolics.Symbol):
         return {"type": "Symbol", "name": expr.name}
     elif isinstance(expr, symbolics.Pow):
